@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     testing = False 
 
-    f = open('key.txt', 'r')
+    f = open('test-key.txt', 'r')
     KEY = f.readline().strip()
     f.close()
 
