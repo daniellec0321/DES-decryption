@@ -139,14 +139,22 @@ if __name__ == '__main__':
         type_coding = input('Please enter d or e: ')
     
     # Create keys
+    f = open(TEXT_PATH, 'r')
+    CIPHER = list(f.readline().strip())
+    f.close()
     f = open(KEY_PATH, 'r')
     KEY = f.readline().strip()
     f.close()
+    
+    type_name = 'Cipher' if type_coding == 'd' else 'Plaintext'
+    print(f'\n{type_name}:', ''.join(CIPHER))
+    print(f'Key: {KEY}')
 
     ROUND_KEYS = [list() for _ in range(16)]
     PC_KEY = [KEY[loc-1] for loc in PC1]
 
     # Perform these operations 16 times
+    print(f'\nRounded Keys:')
     for i in range(16):
 
         # Create the C0 and D0 keys
@@ -162,12 +170,10 @@ if __name__ == '__main__':
 
         # Perform permutation
         ROUND_KEYS[i] = [PC_KEY[loc-1] for loc in PC2]
+        to_print = ''.join(ROUND_KEYS[i])
+        print(f'{i}: {to_print}')
 
     # Encrypt / decrypt
-    f = open(TEXT_PATH, 'r')
-    CIPHER = list(f.readline().strip())
-    f.close()
-
     # Permutate the cipher
     permutated_cipher = [CIPHER[IP[i]-1] for i in range(len(IP))]
 
@@ -190,11 +196,10 @@ if __name__ == '__main__':
     combined_keys = R + L
     output = [combined_keys[IP_INVERSE[i]-1] for i in range(len(IP_INVERSE))]
 
-    print(''.join(output))
-
-    '''
-    for i in range(0, 64, 8):
-        section = ''.join(output[i:i+8])
-        num = int(section, 2)
-        print(hex(num))
-    '''
+    # Output result
+    print('Binary:   ', ''.join(output))
+    plaintext = ''
+    for i in range(0, len(output), 8):
+        sec = output[i:i+8]
+        plaintext += chr(int(''.join(sec), 2))
+    print('Plaintext:', plaintext)
