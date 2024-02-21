@@ -126,12 +126,17 @@ if __name__ == '__main__':
 
     testing = False 
 
+    # Check command line arguments
+    if len(sys.argv) != 3:
+        print(f'Usage $ ./solution.py [path to cipher file] [path to key file]')
+        sys.exit(1)
+    TEXT_PATH = sys.argv[1]
+    KEY_PATH = sys.argv[2]
+
     # Get input from user
-    type_coding = input('Are you encrypting or decrypting? (d/e): ')
+    type_coding = input('Are you decrypting or encrypting? (d/e): ')
     while (type_coding != 'd' and type_coding != 'e'):
         type_coding = input('Please enter d or e: ')
-    type_text = 'plaintext' if type_coding == 'e' else 'ciphertext'
-    stop = input(f'Make sure your {type_text} is stored in text.txt and your key is stored in key.txt. (press any key to continue...) ')
     
     # Create keys
     f = open(KEY_PATH, 'r')
