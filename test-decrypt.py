@@ -101,24 +101,40 @@ if __name__ == '__main__':
 
     # Permutate the cipher
     permutated_cipher = [CIPHER[IP[i]-1] for i in range(len(IP))]
+    # if testing:
+        # assert ''.join(permutated_cipher) == '1100110000000000110011001111111111110000101010101111000010101010'
 
     # Split the cipher
     L = permutated_cipher[:32]
     R = permutated_cipher[32:]
+    # if testing:
+        # assert ''.join(L) == '11001100000000001100110011111111'
+        # assert ''.join(R) == '11110000101010101111000010101010'
 
     # Loop 16 times
     for i in range(15, -1, -1):
+    # for i in range(16):
         # Run key and R between function
         out_function = f_function(R, ROUND_KEYS[i])
+        # assert ''.join(out_function) == '00100011010010101010100110111011'
         # Put L and function into XOR, make that equal to R
         old_R = R.copy()
         R = XOR(L, out_function)
         # Set L equal to R
         L = old_R.copy()
 
+    # if testing:
+        # assert ''.join(L) == '01000011010000100011001000110100'
+        # assert ''.join(R) == '00001010010011001101100110010101'
+
     # Permutate the keys
     combined_keys = R + L
     output = [combined_keys[IP_INVERSE[i]-1] for i in range(len(IP_INVERSE))]
+
+    # if testing:
+        # assert ''.join(output) == '1000010111101000000100110101010000001111000010101011010000000101'
+
+    #assert ''.join(output) == '0000000100100011010001010110011110001001101010111100110111101111'
 
     print(''.join(output))
 
