@@ -138,7 +138,6 @@ if __name__ == '__main__':
                 binary = '0' + binary
             new_cipher += binary
         CIPHER = list(new_cipher)
-        ### TODO ### Pad the back with zeroes. May need to change this to the front instead.
         while len(CIPHER) % 64 != 0:
             CIPHER.append('0')
     if not all([i == '1' or i == '0' for i in KEY]):
@@ -156,9 +155,9 @@ if __name__ == '__main__':
     type_coding = input('Are you decrypting or encrypting? (d/e): ')
     while (type_coding != 'd' and type_coding != 'e'):
         type_coding = input('Please enter d or e: ')
-    type_name = 'Cipher' if type_coding == 'd' else 'Plaintext'
+    to_prints = {'source': 'Cipher', 'destination': 'Plaintext', 'operation': 'decrypt'} if type_coding == 'd' else {'source': 'Plaintext', 'destination': 'Cipher', 'operation': 'encrypt'}
 
-    print(f'\n{type_name}:', ''.join(CIPHER))
+    print('\n' + to_prints['source'] + ': ' + ''.join(CIPHER))
     print('Key:', ''.join(KEY))
 
     ROUND_KEYS = [list() for _ in range(16)]
@@ -185,36 +184,45 @@ if __name__ == '__main__':
         print(f'{i}: {to_print}')
 
     # Encrypt / decrypt
-    # Permutate the cipher
-    permutated_cipher = [CIPHER[IP[i]-1] for i in range(len(IP))]
+    OUTPUT = ''
+    for idx in range(0, len(CIPHER), 64):
 
-    # Split the cipher
-    L = permutated_cipher[:32]
-    R = permutated_cipher[32:]
+        print(f'\nSolving section {int(idx/64)+1} of cipher...')
+        curr_cipher = CIPHER[idx:idx+64]
 
-    # Loop 16 times
-    print(f'\nFunction outputs:')
-    seq = range(0, 16) if type_coding == 'e' else range(15, -1, -1)
-    for i in seq:
-        # Run key and R between function
-        out_function = f_function(R, ROUND_KEYS[i])
-        to_print = ''.join(out_function)
-        print(f'For key {i}: {to_print}')
-        # Put L and function into XOR, make that equal to R
-        old_R = R.copy()
-        R = XOR(L, out_function)
-        # Set L equal to R
-        L = old_R.copy()
+        # Permutate the cipher
+        permutated_cipher = [curr_cipher[IP[i]-1] for i in range(len(IP))]
 
-    # Permutate the keys
-    combined_keys = R + L
-    output = [combined_keys[IP_INVERSE[i]-1] for i in range(len(IP_INVERSE))]
+        # Split the cipher
+        L = permutated_cipher[:32]
+        R = permutated_cipher[32:]
+
+        # Loop 16 times
+        print(f'\n\tFunction outputs:')
+        seq = range(0, 16) if type_coding == 'e' else range(15, -1, -1)
+        for i in seq:
+            # Run key and R between function
+            out_function = f_function(R, ROUND_KEYS[i])
+            to_print = ''.join(out_function)
+            print(f'\tFor key {i}: {to_print}')
+            # Put L and function into XOR, make that equal to R
+            old_R = R.copy()
+            R = XOR(L, out_function)
+            # Set L equal to R
+            L = old_R.copy()
+
+        # Permutate the keys
+        combined_keys = R + L
+        output = [combined_keys[IP_INVERSE[i]-1] for i in range(len(IP_INVERSE))]
+
+        # add section to OUTPUT
+        OUTPUT += ''.join(output)
 
     # Output result
-    print('\nBinary:   ', ''.join(output))
-    if type_coding == 'd':
+    print('\nBinary ' + to_prints['destination'] + ': ' + ''.join(OUTPUT))
+    if to_prints['operation'] == 'decrypt':
         plaintext = ''
-        for i in range(0, len(output), 8):
-            sec = output[i:i+8]
+        for i in range(0, len(OUTPUT), 8):
+            sec = OUTPUT[i:i+8]
             plaintext += chr(int(''.join(sec), 2))
-        print('Plaintext:', plaintext)
+        print('ASCII Plaintext:', plaintext)
