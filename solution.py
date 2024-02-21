@@ -11,25 +11,6 @@ LSH_TABLE = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 
 PC2 = [14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10, 23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32]
 
-'''
-KEY_VALUES = ['000110110000001011101111111111000111000001110010', \
-              '011110011010111011011001110110111100100111100101', \
-              '010101011111110010001010010000101100111110011001', \
-              '011100101010110111010110110110110011010100011101', \
-              '011111001110110000000111111010110101001110101000', \
-              '011000111010010100111110010100000111101100101111', \
-              '111011001000010010110111111101100001100010111100', \
-              '111101111000101000111010110000010011101111111011', \
-              '111000001101101111101011111011011110011110000001', \
-              '101100011111001101000111101110100100011001001111', \
-              '001000010101111111010011110111101101001110000110', \
-              '011101010111000111110101100101000110011111101001', \
-              '100101111100010111010001111110101011101001000001', \
-              '010111110100001110110111111100101110011100111010', \
-              '101111111001000110001101001111010011111100001010', \
-              '110010110011110110001011000011100001011111110101']
-'''
-
 IP = [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4, 62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8, 57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3, 61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7]
 IP_INVERSE = [40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31, 38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29, 36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27, 34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25]
 E_SELECTION = [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1]
@@ -133,22 +114,52 @@ if __name__ == '__main__':
     TEXT_PATH = sys.argv[1]
     KEY_PATH = sys.argv[2]
 
-    # Get input from user
-    type_coding = input('Are you decrypting or encrypting? (d/e): ')
-    while (type_coding != 'd' and type_coding != 'e'):
-        type_coding = input('Please enter d or e: ')
-    
     # Create keys
     f = open(TEXT_PATH, 'r')
     CIPHER = list(f.readline().strip())
     f.close()
     f = open(KEY_PATH, 'r')
-    KEY = f.readline().strip()
+    KEY = list(f.readline().strip())
     f.close()
+
+    # Check integrity of the cipher and key
+    if not all([i == '1' or i == '0' for i in CIPHER]):
+        convert = input(f'Your given cipher is not in binary format. Would you like to automatically convert it to binary? (y/n): ')
+        while convert != 'y' and convert != 'n':
+            convert = input(f'Please enter y or n: ')
+        if convert == 'n':
+            sys.exit(1)
+        # Convert cipher to binary
+        new_cipher = ''
+        for char in CIPHER:
+            ascii_value = ord(char)
+            binary = str(bin(ascii_value))[2:]
+            while len(binary) < 8:
+                binary = '0' + binary
+            new_cipher += binary
+        CIPHER = list(new_cipher)
+        ### TODO ### Pad the back with zeroes. May need to change this to the front instead.
+        while len(CIPHER) % 64 != 0:
+            CIPHER.append('0')
+    if not all([i == '1' or i == '0' for i in KEY]):
+        print(f'Your given key is not in binary format.')
+        sys.exit(1)
+
+    # Check length of cipher and key
+    while len(CIPHER) % 64 != 0:
+        CIPHER.append('0')
+    if len(KEY) != 64:
+        print(f'Your given key is not 64 bits long.')
+        sys.exit(1)
     
+    # Get input from user
+    type_coding = input('Are you decrypting or encrypting? (d/e): ')
+    while (type_coding != 'd' and type_coding != 'e'):
+        type_coding = input('Please enter d or e: ')
     type_name = 'Cipher' if type_coding == 'd' else 'Plaintext'
+
     print(f'\n{type_name}:', ''.join(CIPHER))
-    print(f'Key: {KEY}')
+    print('Key:', ''.join(KEY))
 
     ROUND_KEYS = [list() for _ in range(16)]
     PC_KEY = [KEY[loc-1] for loc in PC1]
@@ -182,10 +193,13 @@ if __name__ == '__main__':
     R = permutated_cipher[32:]
 
     # Loop 16 times
+    print(f'\nFunction outputs:')
     seq = range(0, 16) if type_coding == 'e' else range(15, -1, -1)
     for i in seq:
         # Run key and R between function
         out_function = f_function(R, ROUND_KEYS[i])
+        to_print = ''.join(out_function)
+        print(f'For key {i}: {to_print}')
         # Put L and function into XOR, make that equal to R
         old_R = R.copy()
         R = XOR(L, out_function)
@@ -197,9 +211,10 @@ if __name__ == '__main__':
     output = [combined_keys[IP_INVERSE[i]-1] for i in range(len(IP_INVERSE))]
 
     # Output result
-    print('Binary:   ', ''.join(output))
-    plaintext = ''
-    for i in range(0, len(output), 8):
-        sec = output[i:i+8]
-        plaintext += chr(int(''.join(sec), 2))
-    print('Plaintext:', plaintext)
+    print('\nBinary:   ', ''.join(output))
+    if type_coding == 'd':
+        plaintext = ''
+        for i in range(0, len(output), 8):
+            sec = output[i:i+8]
+            plaintext += chr(int(''.join(sec), 2))
+        print('Plaintext:', plaintext)
