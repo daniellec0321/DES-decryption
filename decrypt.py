@@ -48,8 +48,51 @@ S8 = [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7], \
       [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8], \
       [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
 
+P = [16, 7, 20, 21, 29, 12, 28, 17, 1, 15, 23, 26, 5, 18, 31, 10, 2, 8, 24, 14, 32, 27, 3, 9, 19, 13, 30, 6, 22, 11, 4, 25]
+
+
+
+def XOR(x: list[str], y: list[str]) -> list[str]:
+    z = list()
+    for a, b in zip(x, y):
+        if a != b:
+            z.append('1')
+        else:
+            z.append('0')
+    return z
+
+
+
+def f_function(R: list[str], K: list[str]) -> list[str]:
+
+    # Put R through the E bit selection table
+    R_48_bits = [R[E_SELECTION[i]-1] for i in range(len(E_SELECTION))]
+
+    # Do exclusive OR with K
+    xor_bits = XOR(R_48_bits, K)
+
+    # Put through S boxes
+    s_bits = list()
+    Sboxes = [S1, S2, S3, S4, S5, S6, S7, S8]
+    for i in range(8):
+        sec = xor_bits[i*6:(i+1)*6]
+        row = int(sec[0]+sec[5], 2)
+        column = int(sec[1]+sec[2]+sec[3]+sec[4], 2)
+        part = bin(Sboxes[i][row][column])[2:]
+        pad_part = '0'*(4-len(part)) + part
+        s_bits += list(pad_part)
+
+    # Do permutation
+    ret = [s_bits[P[i]-1] for i in range(32)]
+    return ret
+
+
+
 if __name__ == '__main__':
 
+    test = f_function(list('11110000101010101111000010101010'), list('000110110000001011101111111111000111000001110010'))
+
+    '''
     testing = True
 
     f = open(ROUND_KEYS_PATH, 'r')
@@ -74,3 +117,4 @@ if __name__ == '__main__':
     # Loop 16 times
     for i in range(16):
         pass
+    '''
